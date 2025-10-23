@@ -37,5 +37,9 @@ module.exports = {
     },
     compress: true,
     port: 9000,
+    allowedHosts: 'all', // allow all hostname requests, including proxied ones
+    host: '0.0.0.0',      // allow accepting external connections (like from NGINX)
+    hot: true,
+    https: false, 
   },
 };
