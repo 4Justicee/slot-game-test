@@ -60,10 +60,11 @@ export class Reel {
         return new PIXI.Sprite(texture);
     }
 
-    public update(delta: number): void {
-        if (!this.isSpinning && this.speed === 0) return;
-
-        // TODO:Move symbols horizontally
+    public update(): void {
+        if (!this.isSpinning && this.speed === 0) {
+            this.snapToGrid();
+            return;
+        }
 
         for (const symbol of this.symbols) {
             symbol.x -= this.speed;
@@ -88,14 +89,19 @@ export class Reel {
     }
 
     private snapToGrid(): void {
-        // TODO: Snap symbols to horizontal grid positions
-	// Snap symbols to horizontal grid positions
-        for (let i = 0; i < this.symbols.length; i++) {
-            const symbol = this.symbols[i];
-            const targetX = i * this.symbolSize;
-            symbol.x = targetX;
-        }
-
+        for (const symbol of this.symbols) {
+            const relativeX = symbol.x;
+            const snappedIndex = Math.round(relativeX / this.symbolSize);
+            const targetX = snappedIndex * this.symbolSize;
+    
+            // Smooth transition (manual interpolation — simple easing)
+            symbol.x += (targetX - symbol.x) * 0.12;
+    
+            // Optional: if close enough, snap exactly
+            if (Math.abs(symbol.x - targetX) < 0.5) {
+                symbol.x = targetX;
+            }
+        }    
     }
 
     public startSpin(): void {
