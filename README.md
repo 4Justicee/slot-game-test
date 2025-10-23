@@ -4,8 +4,7 @@ A complete implementation of a slots game using PixiJS and TypeScript, built as 
 
 ## 🎮 Live Demo
 
-[Play the game here](https://your-github-username.github.io/slots-game) *(Replace with your actual GitHub Pages URL)*
-
+[Play the game here](https://testslot.luckyverse.club)
 ## ✨ Features
 
 - **Horizontal Spinning Reels**: Smooth left-to-right symbol movement
