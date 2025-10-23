@@ -2,6 +2,7 @@ import * as PIXI from 'pixi.js';
 import { SlotMachine } from '../slots/SlotMachine';
 import { AssetLoader } from '../utils/AssetLoader';
 import { sound } from '../utils/sound';
+import { GAME_CONSTANTS } from '../constants';
 
 export class UI {
     public container: PIXI.Container;
@@ -22,10 +23,10 @@ export class UI {
             this.spinButton = new PIXI.Sprite(AssetLoader.getTexture('button_spin.png'));
 
             this.spinButton.anchor.set(0.5);
-            this.spinButton.x = this.app.screen.width / 2;
-            this.spinButton.y = this.app.screen.height - 50;
-            this.spinButton.width = 150;
-            this.spinButton.height = 80;
+            this.spinButton.x = GAME_CONSTANTS.DESIGN_WIDTH / 2;
+            this.spinButton.y = GAME_CONSTANTS.DESIGN_HEIGHT - GAME_CONSTANTS.UI.BUTTON_Y_OFFSET;
+            this.spinButton.width = GAME_CONSTANTS.UI.BUTTON_WIDTH;
+            this.spinButton.height = GAME_CONSTANTS.UI.BUTTON_HEIGHT;
 
             this.spinButton.interactive = true;
             this.spinButton.cursor = 'pointer';
@@ -49,10 +50,10 @@ export class UI {
     }
 
     private onButtonOver(event: PIXI.FederatedPointerEvent): void {
-        (event.currentTarget as PIXI.Sprite).scale.set(1.05);
+        (event.currentTarget as PIXI.Sprite).scale.set(GAME_CONSTANTS.UI.BUTTON_SCALE_HOVER);
     }
 
     private onButtonOut(event: PIXI.FederatedPointerEvent): void {
-        (event.currentTarget as PIXI.Sprite).scale.set(1.0);
+        (event.currentTarget as PIXI.Sprite).scale.set(GAME_CONSTANTS.UI.BUTTON_SCALE_NORMAL);
     }
 }
