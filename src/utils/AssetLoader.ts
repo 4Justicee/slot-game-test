@@ -1,37 +1,20 @@
 import * as PIXI from 'pixi.js';
 import { sound } from './sound';
+import { type SpineData } from '../types';
+import { GAME_CONSTANTS } from '../constants';
 
 // Asset paths
-const IMAGES_PATH = 'assets/images/';
-const SPINES_PATH = 'assets/spines/';
-const SOUNDS_PATH = 'assets/sounds/';
+const IMAGES_PATH = GAME_CONSTANTS.ASSETS.IMAGES_PATH;
+const SPINES_PATH = GAME_CONSTANTS.ASSETS.SPINES_PATH;
+const SOUNDS_PATH = GAME_CONSTANTS.ASSETS.SOUNDS_PATH;
 
 // Asset lists
-const IMAGES = [
-    'symbol1.png',
-    'symbol2.png',
-    'symbol3.png',
-    'symbol4.png',
-    'symbol5.png',
-    'background.png',
-    'button_spin.png',
-    'button_spin_disabled.png',
-];
-
-const SPINES = [
-    'big-boom-h.json',
-    'base-feature-frame.json'
-];
-
-
-const SOUNDS = [
-    'Reel spin.webm',
-    'win.webm',
-    'Spin button.webm',
-];
+const IMAGES = GAME_CONSTANTS.IMAGES;
+const SPINES = GAME_CONSTANTS.SPINES;
+const SOUNDS = GAME_CONSTANTS.SOUNDS;
 
 const textureCache: Record<string, PIXI.Texture> = {};
-const spineCache: Record<string, any> = {};
+const spineCache: Record<string, SpineData> = {};
 
 export class AssetLoader {
     constructor() {
@@ -62,7 +45,7 @@ export class AssetLoader {
                 console.log('Spine animations loaded successfully');
 
                 for (const [key, spine] of Object.entries(spineAssets)) {
-                    spineCache[key] = spine;
+                    spineCache[key] = spine as SpineData;
                 }
             } catch (error) {
                 console.error('Error loading spine animations:', error);
@@ -91,7 +74,7 @@ export class AssetLoader {
         return textureCache[name];
     }
 
-    public static getSpine(name: string): any {
+    public static getSpine(name: string): SpineData | undefined {
         return spineCache[name];
     }
 }
