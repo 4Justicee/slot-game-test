@@ -60,6 +60,12 @@ export class Reel {
 
     private snapToGrid(): void {
         // TODO: Snap symbols to horizontal grid positions
+	// Snap symbols to horizontal grid positions
+        for (let i = 0; i < this.symbols.length; i++) {
+            const symbol = this.symbols[i];
+            const targetX = i * this.symbolSize;
+            symbol.x = targetX;
+        }
 
     }
 
