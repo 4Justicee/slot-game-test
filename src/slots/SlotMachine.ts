@@ -3,13 +3,16 @@ import 'pixi-spine';
 import { Reel } from './Reel';
 import { sound } from '../utils/sound';
 import { AssetLoader } from '../utils/AssetLoader';
-import {Spine} from "pixi-spine";
+import { Spine } from 'pixi-spine';
+import { GAME_CONSTANTS } from '../constants';
 
-const REEL_COUNT = 4;
-const SYMBOLS_PER_REEL = 6;
-const SYMBOL_SIZE = 150;
-const REEL_HEIGHT = SYMBOL_SIZE;
-const REEL_SPACING = 10;
+const REEL_COUNT = GAME_CONSTANTS.DEFAULT_SLOT_MACHINE_CONFIG.reelCount;
+const SYMBOLS_PER_REEL = GAME_CONSTANTS.DEFAULT_SLOT_MACHINE_CONFIG.symbolsPerReel;
+const SYMBOL_SIZE = GAME_CONSTANTS.DEFAULT_SLOT_MACHINE_CONFIG.symbolSize;
+const REEL_HEIGHT = GAME_CONSTANTS.DEFAULT_SLOT_MACHINE_CONFIG.reelHeight;
+const REEL_SPACING = GAME_CONSTANTS.DEFAULT_SLOT_MACHINE_CONFIG.reelSpacing;
+const DESIGN_WIDTH = GAME_CONSTANTS.DESIGN_WIDTH;
+const DESIGN_HEIGHT = GAME_CONSTANTS.DESIGN_HEIGHT;
 
 export class SlotMachine {
     public container: PIXI.Container;
@@ -24,11 +27,10 @@ export class SlotMachine {
         this.app = app;
         this.container = new PIXI.Container();
         this.reels = [];
-
+        
         // Center the slot machine
-        this.container.x = this.app.screen.width / 2 - ((SYMBOL_SIZE * SYMBOLS_PER_REEL) / 2);
-        this.container.y = this.app.screen.height / 2 - ((REEL_HEIGHT * REEL_COUNT + REEL_SPACING * (REEL_COUNT - 1)) / 2);
-
+        this.container.x = DESIGN_WIDTH / 2 - ((SYMBOL_SIZE * SYMBOLS_PER_REEL) / 2);
+        this.container.y = DESIGN_HEIGHT / 2 - ((REEL_HEIGHT * REEL_COUNT + REEL_SPACING * (REEL_COUNT - 1)) / 2);
         this.createBackground();
 
         this.createReels();
@@ -54,7 +56,6 @@ export class SlotMachine {
     }
 
     private createReels(): void {
-        // Create each reel
         for (let i = 0; i < REEL_COUNT; i++) {
             const reel = new Reel(SYMBOLS_PER_REEL, SYMBOL_SIZE);
             reel.container.y = i * (REEL_HEIGHT + REEL_SPACING);
@@ -63,10 +64,10 @@ export class SlotMachine {
         }
     }
 
-    public update(delta: number): void {
+    public update(): void {
         // Update each reel
         for (const reel of this.reels) {
-            reel.update(delta);
+            reel.update();
         }
     }
 
@@ -87,13 +88,13 @@ export class SlotMachine {
         for (let i = 0; i < this.reels.length; i++) {
             setTimeout(() => {
                 this.reels[i].startSpin();
-            }, i * 200);
+            }, i * GAME_CONSTANTS.ANIMATION.REEL_STOP_DELAY);
         }
 
         // Stop all reels after a delay
         setTimeout(() => {
             this.stopSpin();
-        }, 500 + (this.reels.length - 1) * 200);
+        }, GAME_CONSTANTS.ANIMATION.WIN_CHECK_DELAY + (this.reels.length - 1) * GAME_CONSTANTS.ANIMATION.REEL_STOP_DELAY);
 
     }
 
@@ -107,27 +108,55 @@ export class SlotMachine {
                     setTimeout(() => {
                         this.checkWin();
                         this.isSpinning = false;
-
+                        sound.stop('Reel spin');
+                        
                         if (this.spinButton) {
                             this.spinButton.texture = AssetLoader.getTexture('button_spin.png');
                             this.spinButton.interactive = true;
                         }
-                    }, 500);
+                    }, GAME_CONSTANTS.ANIMATION.WIN_CHECK_DELAY);
                 }
-            }, i * 400);
+            }, i * GAME_CONSTANTS.ANIMATION.REEL_STOP_TIMEOUT);
         }
     }
 
     private checkWin(): void {
         // Simple win check - just for demonstration
-        const randomWin = Math.random() < 0.3; // 30% chance of winning
+        const randomWin = Math.random() < GAME_CONSTANTS.WIN_PROBABILITY;
 
         if (randomWin) {
             sound.play('win');
             console.log('Winner!');
 
             if (this.winAnimation) {
-                // TODO: Play the win animation found in "big-boom-h" spine
+                // Try to play an available animation on the win spine
+                const state = this.winAnimation.state;
+                let animationName = 'animation';
+
+                if (!state.hasAnimation(animationName)) {
+                    // Fallback to the first available animation if the default name doesn't exist
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    const animations = (state.data as any)?.skeletonData?.animations as Array<{ name: string }> | undefined;
+                    if (animations && animations.length > 0) {
+                        animationName = animations[0].name;
+                    } else {
+                        console.warn('No animations found on win spine.');
+                        return;
+                    }
+                }
+
+                this.winAnimation.visible = true;
+                const trackEntry = state.setAnimation(0, animationName, false);
+
+                // Hide animation after it completes
+                if (trackEntry) {
+                    trackEntry.listener = {
+                        complete: () => {
+                            this.winAnimation!.visible = false;
+                        }
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    } as any;
+                }
             }
         }
     }
@@ -140,7 +169,8 @@ export class SlotMachine {
         try {
             const frameSpineData = AssetLoader.getSpine('base-feature-frame.json');
             if (frameSpineData) {
-                this.frameSpine = new Spine(frameSpineData.spineData);
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                this.frameSpine = new Spine(frameSpineData.spineData as any);
 
                 this.frameSpine.y = (REEL_HEIGHT * REEL_COUNT + REEL_SPACING * (REEL_COUNT - 1)) / 2;
                 this.frameSpine.x = (SYMBOL_SIZE * SYMBOLS_PER_REEL) / 2;
@@ -154,7 +184,8 @@ export class SlotMachine {
 
             const winSpineData = AssetLoader.getSpine('big-boom-h.json');
             if (winSpineData) {
-                this.winAnimation = new Spine(winSpineData.spineData);
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                this.winAnimation = new Spine(winSpineData.spineData as any);
 
                 this.winAnimation.x = (REEL_HEIGHT * REEL_COUNT + REEL_SPACING * (REEL_COUNT - 1)) / 2;
                 this.winAnimation.y = (SYMBOL_SIZE * SYMBOLS_PER_REEL) / 2;

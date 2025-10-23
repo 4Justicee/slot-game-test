@@ -1,16 +1,10 @@
 import * as PIXI from 'pixi.js';
 import { AssetLoader } from '../utils/AssetLoader';
+import { SYMBOL_TEXTURES } from '../types';
+import { GAME_CONSTANTS } from '../constants';
 
-const SYMBOL_TEXTURES = [
-    'symbol1.png',
-    'symbol2.png',
-    'symbol3.png',
-    'symbol4.png',
-    'symbol5.png',
-];
-
-const SPIN_SPEED = 50; // Pixels per frame
-const SLOWDOWN_RATE = 0.95; // Rate at which the reel slows down
+const SPIN_SPEED = GAME_CONSTANTS.ANIMATION.SPIN_SPEED;
+const SLOWDOWN_RATE = GAME_CONSTANTS.ANIMATION.SLOWDOWN_RATE;
 
 export class Reel {
     public container: PIXI.Container;
@@ -24,21 +18,46 @@ export class Reel {
         this.container = new PIXI.Container();
         this.symbols = [];
         this.symbolSize = symbolSize;
-        this.symbolCount = symbolCount;
+        this.symbolCount = symbolCount + 1;
 
         this.createSymbols();
+        this.applyMask();
+    }
+
+    private applyMask(): void {
+        const mask = new PIXI.Graphics();
+        mask.beginFill(0xFFFFFF);
+        mask.drawRect(0, 0, (this.symbolCount - 1) * this.symbolSize, this.symbolSize); // Adjust width/height as needed
+        mask.endFill();
+    
+        // Apply mask to the container
+        this.container.mask = mask;
+        this.container.addChild(mask); // Optional: comment this out if you want the mask itself to be invisible
     }
 
     private createSymbols(): void {
         // Create symbols for the reel, arranged horizontally
+        for (let i = 0; i < this.symbolCount; i++) {
+            const symbol = this.createRandomSymbol();
+            const positionX = i * this.symbolSize;
+            symbol.x = positionX;
+            symbol.y = 0;
+            symbol.width = this.symbolSize;
+            symbol.height = this.symbolSize;
+            
+            this.symbols.push(symbol);
+            this.container.addChild(symbol);
+        }
     }
 
     private createRandomSymbol(): PIXI.Sprite {
-        // TODO:Get a random symbol texture
-
-        // TODO:Create a sprite with the texture
-
-        return new PIXI.Sprite();
+        // Get a random symbol texture
+        const randomIndex = Math.floor(Math.random() * SYMBOL_TEXTURES.length);
+        const textureName = SYMBOL_TEXTURES[randomIndex];
+        const texture = AssetLoader.getTexture(textureName);
+        
+        // Create a sprite with the texture
+        return new PIXI.Sprite(texture);
     }
 
     public update(delta: number): void {
@@ -46,11 +65,21 @@ export class Reel {
 
         // TODO:Move symbols horizontally
 
-        // If we're stopping, slow down the reel
+        for (const symbol of this.symbols) {
+            symbol.x -= this.speed;
+            
+            // If symbol moves off screen to the left, wrap it to the right
+            if (symbol.x < - this.symbolSize) {
+                symbol.x += this.symbolCount * this.symbolSize;
+                // Change symbol to a random one when wrapping
+                const randomIndex = Math.floor(Math.random() * SYMBOL_TEXTURES.length);
+                const textureName = SYMBOL_TEXTURES[randomIndex];
+                symbol.texture = AssetLoader.getTexture(textureName);
+            }
+        }
+    
         if (!this.isSpinning && this.speed > 0) {
             this.speed *= SLOWDOWN_RATE;
-
-            // If speed is very low, stop completely and snap to grid
             if (this.speed < 0.5) {
                 this.speed = 0;
                 this.snapToGrid();
